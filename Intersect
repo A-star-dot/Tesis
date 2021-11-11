@@ -1,0 +1,42 @@
+#filtrado de tablas de Metavolcano
+#creado por Angelo T
+
+setwd("~/Desktop/Directorio/")
+
+Tabla_Vote = read.delim("Tabla_vote.txt",
+                        header = TRUE,
+                        sep = "\t")
+
+Tabla_Comb = read.delim("Tabla_Degs_Comb.txt",
+                        header = TRUE,
+                        sep = "\t")
+
+# Filtrado por valores Up y Downregulated de tabla vote
+Tabla_Vote_Upregulated = subset(Tabla_Vote, degvcount== "2.Up-regulated")
+Tabla_Vote_Downreulated = subset(Tabla_Vote, degvcount== "0.Down-regulated")
+
+
+#Filtrado por valores Up y Downregulated de tabla degs comb
+Tabla_Degs_Comb_significativos = subset(Tabla_Comb, metap < 0.05)
+Tabla_Degs_Comb_significativos_Upregulated = subset(Tabla_Degs_Comb_significativos, metafc > 0.5)
+Tabla_Degs_Comb_significativos_Downregulated= subset(Tabla_Degs_Comb_significativos, metafc < -0.5)
+
+#Realizacion de interseccion de valores up y down regulated entre ambos enfoques
+
+Int_Up = intersect(Tabla_Vote_Upregulated$ensembl_gene_id,
+                   Tabla_Degs_Comb_significativos_Upregulated$ensembl_gene_id)
+Int_Down = intersect(Tabla_Vote_Downreulated$ensembl_gene_id,
+                     Tabla_Degs_Comb_significativos_Downregulated$ensembl_gene_id)
+
+write.table(Int_Up,
+            file = "Int_Up.txt",
+            quote = FALSE,
+            col.names = FALSE,
+            row.names = FALSE,
+            sep = "\t")
+write.table(Int_Down,
+            file = "Int_Down.txt",
+            quote = FALSE,
+            col.names = FALSE,
+            row.names = FALSE,
+            sep = "\t")
