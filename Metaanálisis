@@ -1,0 +1,111 @@
+setwd("~/Desktop/Directorio/")   # establece lugar de extracción de archivo
+
+GSE48060 = read.delim("GSE48060_anot.txt", header = T, sep = "\t")   #importa el archivo
+GSE48060 = na.omit(GSE48060)   # elimina filas na
+GSE141512 = read.delim("GSE141512_anot.txt", header = T, sep = "\t")
+GSE141512 = na.omit(GSE141512)
+GSE60993 = read.delim("GSE60993_anot.txt", header = T, sep = "\t")
+GSE60993 = na.omit(GSE60993)
+GSE66360 = read.delim("GSE66360_anot.txt", header = T, sep = "\t")
+GSE66360 = na.omit(GSE66360)
+GSE83500 = read.delim("GSE83500_anot.txt", header = T, sep = "\t")
+# lista de listas para MetaVolcano
+name = c("GSE48060", "GSE141512", "GSE60993", "GSE66360", "GSE83500")
+#vector con nombres de estudios
+data = list(GSE48060,GSE141512, GSE60993, GSE66360, GSE83500)
+# Lista de listas
+names(data) = name   # Coloca nombre a cada lista dentro de la lista
+# ENSG00000090432   # ensemble id number of MUL1
+
+#Metanalisis
+
+#Llamado de librerias
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = "3.13")
+BiocManager::install("MetaVolcanoR", eval = FALSE)
+
+library(MetaVolcanoR)
+library(knitr)
+
+
+#Meta DEGS REM
+meta_degs_rem <- rem_mv(data,
+                        pcriteria="P.Value",
+                        foldchangecol='logFC', 
+                        genenamecol='ensembl_gene_id',
+                        geneidcol=NULL,
+                        collaps=TRUE,
+                        llcol='CI.L',
+                        rlcol='CI.R',
+                        vcol=NULL, 
+                        cvar=TRUE,
+                        metathr=0.05,
+                        jobname="Meta_Degs_REM",
+                        outputfolder=".", 
+                        draw='HTML',
+                        ncores=1)
+draw_forest(remres = meta_degs_rem,
+            gene="ENSG00000136869",
+            genecol="ensembl_gene_id", 
+            foldchangecol="logFC",
+            llcol="CI.L", 
+            rlcol="CI.R",
+            jobname="MetaVolcano",
+            outputfolder=".",
+            draw="HTML")
+
+meta_degs_vote <- votecount_mv(data,
+                               pcriteria='P.Value',
+                               foldchangecol='logFC',
+                               genenamecol='ensembl_gene_id',
+                               geneidcol=NULL,
+                               pvalue=0.05,
+                               foldchange=0, 
+                               metathr=0.05,
+                               collaps=TRUE,
+                               jobname="MetaDegsVote", 
+                               outputfolder=".",
+                               draw='HTML')
+
+
+a#Tabla de conteo de votos
+Tabla_Vote = meta_degs_vote@metaresult
+write.table(Tabla_Vote,
+            file = "Tabla_vote.txt",
+            quote = FALSE,
+            col.names = TRUE,
+            row.names = FALSE,
+            sep = "\t")
+Tabla_Vote_MUL1 = subset(Tabla_Vote, ensembl_gene_id=="ENSG00000090432")
+
+
+Tabla_Vote_Upregulated = subset(Tabla_Vote, degvcount== "2.Up-regulated")
+Tabla_Vote_Downreulated = subset(Tabla_Vote, degvcount== "0.Down-regulated")
+#Enfoque de combinación
+
+meta_degs_comb <- combining_mv(data,
+                               pcriteria='P.Value', 
+                               foldchangecol='logFC',
+                               genenamecol='ENSG00000090432',
+                               geneidcol=NULL,
+                               metafc='Mean',
+                               metathr=0.05, 
+                               collaps=TRUE,
+                               jobname="MetaDegsComb",
+                               outputfolder=".",
+                               draw='HTML')
+
+#Tabla de conteo
+Tabla_Degs_Comb = meta_degs_comb@metaresult
+write.table(Tabla_Degs_Comb,
+            file = "Tabla_Degs_Comb.txt",
+            quote = FALSE,
+            col.names = TRUE,
+            row.names = FALSE,
+            sep = "\t")
+Tabla_Degs_Comb_MUL1 = subset(Tabla_Degs_Comb, ensembl_gene_id== "ENSG00000090432")
+
+Tabla_Degs_Comb_significativos = subset(Tabla_Degs_Comb, metap < 0.05)
+Tabla_Degs_Comb_significativos_Upregulated = subset(Tabla_Degs_Comb_significativos, metafc > 0.5)
+Tabla_Degs_Comb_significativos_Downregulated= subset(Tabla_Degs_Comb_significativos, metafc < -0.5)
