@@ -1,0 +1,55 @@
+setwd("~/Desktop/Directorio/")
+GPL13667anot = read.delim("GPL13667_anot.txt", header = T, sep = "\t")
+GPL17586anot = read.delim("GPL17586_anot.txt", header = T, sep = "\t")
+GPL570anot = read.delim("GPL570_anot.txt", header = T, sep = "\t")
+GPL6884ano =read.delim("GPL6884_anot.txt", header = T, sep = "\t")
+
+
+library(UpSetR)
+Plataformasanotadas= list(GLP13667= GPL13667anot$Gene.stable.ID,
+                          GPL17586= GPL17586anot$Gene.stable.ID,
+                          GPL570= GPL570anot$Gene.stable.ID,
+                          GPL6884= GPL6884ano$Gene.stable.ID)
+
+
+
+
+
+upset(fromList(Plataformasanotadas),
+      order.by = "freq",
+      matrix.color = "#000000",
+      sets.bar.color = "#FF0000",
+      mainbar.y.label = "#000080",
+      text.scale = c(1.8,1.8,1.5,1.5,1.8,1.8),
+      mainbar.y.max = "Sondas compartidas",
+      sets.x.label = "Cantidad de sondas")
+upset(fromList(Plataformasanotadas),
+      order.by = "freq",
+      matrix.color = "#000000", # pelotas de la matriz
+      sets.bar.color = "#FF0000", # barras laterales
+      main.bar.color = "#0000FF", # barras superiores
+      mainbar.y.label = "Cantidad de sondas compartidas",
+      sets.x.label = "Número sondas",
+      text.scale = c(1.8, 1.8, 1.5, 1.5, 1.8, 1.8))
+
+
+
+library(ggplot2)
+tabla = read.delim("tabla_estudios_angelo.txt", header = T, sep = "\t")
+
+
+
+ggplot(data = tabla, aes(X = estudio , y = total))+
+  coord_flip() +
+  geom_bar(aes(x = estudio), stat = "identity",
+           position=position_dodge(),
+           fill = "grey")+
+  geom_bar(aes(x = estudio, y = correccion_utilizado), stat = "identity",
+           position=position_dodge(),
+           fill = "#0000FF")+
+  theme_classic()+
+  labs(x = "Studies", y = "Number plates")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15),
+        axis.title.x = element_text(face = "bold", vjust = 0.5),
+        axis.title.y = element_text(face = "bold", vjust = 0.5))
